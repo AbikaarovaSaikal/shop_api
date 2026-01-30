@@ -27,6 +27,12 @@ def product_list_api_view(request):
     data = ProductListSerializer(instance=products, many=True).data
     return Response(status=status.HTTP_200_OK, data=data)
 
+@api_view(['GET'])
+def product_reviews_api_view(request):
+    products = Product.objects.all()
+    data = ProductListSerializer(products, many=True).data
+    return Response(data=data)
+
 
 @api_view(['GET'])
 def product_detail_api_view(request, id):
