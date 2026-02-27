@@ -1,5 +1,7 @@
 from django.db import models
 
+from users.models import CustomUser
+
 class Category(models.Model):
     name = models.CharField(max_length=255)
 
@@ -12,6 +14,7 @@ class Product(models.Model):
     price = models.IntegerField(default=0)
     category = models.ForeignKey(Category, on_delete=models.SET_NULL, 
                                  null=True, blank=True, related_name='products')
+    owner = models.ForeignKey(to=CustomUser, on_delete=models.CASCADE, blank=True, null=True)
 
     def __str__(self):
         return self.title
