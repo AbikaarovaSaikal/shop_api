@@ -16,6 +16,8 @@ from .serializers import (
     CategoryValidateSerializer,
     ProductValidateSerializer,
 )
+from common.validators import validate_user_age
+
 PAGE_SIZE = 6
 
 class CustomPagination(PageNumberPagination):
@@ -68,6 +70,8 @@ class ProductListCreateAPIView(ListCreateAPIView):
     permission_classes = (IsOwner | IsAnonymous | IsModerator)
 
     def post(self, request, *args, **kwargs):
+        email = request.auth.get("email")
+        validate_user_age(request)
         serializer = ProductValidateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
@@ -81,7 +85,7 @@ class ProductListCreateAPIView(ListCreateAPIView):
             description=description,
             price=price,
             category=category,
-            owner=request.user
+            owner=request.auth.get("user_id")
         )
 
         return Response(data=ProductSerializer(product).data,
