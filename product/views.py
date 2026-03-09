@@ -17,6 +17,7 @@ from .serializers import (
     ProductValidateSerializer,
 )
 from common.validators import validate_user_age
+from django.core.cache import cache
 
 PAGE_SIZE = 6
 
@@ -90,6 +91,15 @@ class ProductListCreateAPIView(ListCreateAPIView):
 
         return Response(data=ProductSerializer(product).data,
                         status=status.HTTP_201_CREATED)
+    
+    def get(self, request, *args, **kwargs):
+        cached_data = cache.get("product_list")
+        if cached_data:
+            return Response(data=cached_data, status=status.HTTP_200_OK)
+        response = super().get(self, request, *args, **kwargs)
+        if response.data.get("total", 0) > 0: 
+            cache.set("product_list", response.data, timeout=300)
+        return response
 
 
 class ProductDetailAPIView(RetrieveUpdateDestroyAPIView):

@@ -17,6 +17,7 @@ from .models import ConfirmCode
 import random
 import string
 from rest_framework_simplejwt.views import TokenObtainPairView
+from django.core.cache import cache
 
 class CustomTokenObtainPairView(TokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer
@@ -63,10 +64,7 @@ class RegistrationAPIView(CreateAPIView):
             )
             code = ''.join(random.choices(string.digits, k=6))
 
-            confirmation_code = ConfirmCode.objects.create(
-                user=user,
-                code=code
-            )
+            cache.set(f"confirm_{user.id}", code, timeout=300)
 
         return Response(
             status=status.HTTP_201_CREATED,
@@ -86,6 +84,20 @@ class ConfirmUserAPIView(CreateAPIView):
 
         user_id = serializer.validated_data['user_id']
 
+        code = serializer.validated_data['code']
+        save_code = cache.get(f"confirm_{user_id}")
+        if save_code is None:
+            return Response(
+                {"error": "Ваш код потверждения истёк"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        if save_code:
+            if save_code != code:
+                return Response(
+                    {'error': 'Неправильный код потверждения!'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+        
         with transaction.atomic():
             user = CustomUser.objects.get(id=user_id)
             user.is_active = True
@@ -93,7 +105,7 @@ class ConfirmUserAPIView(CreateAPIView):
 
             token, _ = Token.objects.get_or_create(user=user)
 
-            ConfirmCode.objects.filter(user=user).delete()
+            cache.delete(f"confirm_{user_id}")
 
         return Response(
             status=status.HTTP_200_OK,
