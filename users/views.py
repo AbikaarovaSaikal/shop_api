@@ -1,23 +1,21 @@
 from django.db import transaction
-from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from django.contrib.auth import authenticate
 from rest_framework.authtoken.models import Token
 from rest_framework.generics import CreateAPIView
 from .models import CustomUser
-
 from .serializers import (
     RegisterValidateSerializer,
     AuthValidateSerializer,
     ConfirmationSerializer,
     CustomTokenObtainPairSerializer
 )
-from .models import ConfirmCode
 import random
 import string
 from rest_framework_simplejwt.views import TokenObtainPairView
 from django.core.cache import cache
+from users.tasks import random_number, send_otp_email
 
 class CustomTokenObtainPairView(TokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer
@@ -51,6 +49,7 @@ class RegistrationAPIView(CreateAPIView):
     serializer_class = RegisterValidateSerializer
 
     def post(self, request, *args, **kwargs):
+        random_number.delay()
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
@@ -65,7 +64,8 @@ class RegistrationAPIView(CreateAPIView):
             code = ''.join(random.choices(string.digits, k=6))
 
             cache.set(f"confirm_{user.id}", code, timeout=300)
-
+        
+        send_otp_email.delay(email, code)
         return Response(
             status=status.HTTP_201_CREATED,
             data={
