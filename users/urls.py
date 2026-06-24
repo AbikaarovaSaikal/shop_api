@@ -16,8 +16,8 @@ urlpatterns = [
     path('registration/', RegistrationAPIView.as_view()),
     path('login/', AuthorizationAPIView.as_view()),
     path('confirm/', ConfirmUserAPIView.as_view()),
-    path('api/v1/jwt/', CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),
-    path('api/v1/jwt/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
-    path('api/v1/jwt/verify/', TokenVerifyView.as_view(), name='token_verify'),
+    path('jwt/', CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('jwt/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path('jwt/verify/', TokenVerifyView.as_view(), name='token_verify'),
     path('google-login/', GoogleLoginAPIView.as_view()),
 ]

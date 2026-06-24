@@ -86,7 +86,7 @@ class ProductListCreateAPIView(ListCreateAPIView):
             description=description,
             price=price,
             category=category,
-            owner=request.auth.get("user_id")
+            owner=request.user
         )
 
         return Response(data=ProductSerializer(product).data,
